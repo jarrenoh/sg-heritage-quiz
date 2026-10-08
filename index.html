@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f4ee">
+  <title>Singapore Heritage Quiz</title>
+  <style>
+    :root { color-scheme: light; --paper: #f7f4ee; --ink: #18251c; --muted: #374438; --line: #6a776c; --accent: #943b28; --green: #17552c; --red: #8b1e27; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+    button { font: inherit; cursor: pointer; }
+    button:focus-visible, a:focus-visible { outline: 3px solid #325f8c; outline-offset: 5px; }
+    .brand-mark { width: 80px; height: 80px; background: var(--accent); color: white; border-radius: 24px 24px 24px 6px; display: grid; place-items: center; font-size: 32px; font-weight: 750; letter-spacing: .04em; }
+    main { max-width: 960px; margin: 28px auto 0; padding: 0 28px 28px; }
+    #welcome { min-height: calc(100svh - 56px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 36px 0; }
+    #welcome .brand-mark { margin-bottom: 28px; }
+    .welcome-translation { display: block; font-size: 28px; font-weight: 500; margin-top: 12px; }
+    .welcome-description { max-width: 720px; font-size: 22px; line-height: 1.5; color: var(--muted); margin: 28px 0; }
+    .welcome-description span { display: block; margin-top: 10px; }
+    #start { min-width: 260px; }
+    .progress-meta { display: flex; justify-content: space-between; align-items: center; gap: 16px; font-size: 16px; color: var(--muted); margin-bottom: 10px; }
+    #category { min-width: 0; overflow-x: auto; white-space: nowrap; font-weight: 600; }
+    #category span { display: inline; font-weight: 400; }
+    #category span::before { content: " · "; }
+    #question-count { white-space: nowrap; }
+    progress { display: block; appearance: none; width: 100%; height: 4px; border: 0; border-radius: 10px; overflow: hidden; background: #c5d8c9; accent-color: var(--green); }
+    progress::-webkit-progress-bar { background: #c5d8c9; }
+    progress::-webkit-progress-value { background: var(--green); border-radius: 10px; }
+    progress::-moz-progress-bar { background: var(--green); border-radius: 10px; }
+    .question-heading { text-align: center; margin: 23px 0 18px; }
+    h1 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(36px, 5vw, 48px); line-height: 1.25; margin: 0; font-weight: 600; letter-spacing: -.015em; }
+    .question-heading p { font-size: clamp(28px, 4vw, 32px); line-height: 1.4; font-weight: 500; margin: 10px 0 0; color: var(--ink); }
+    figure { margin: 0; background: white; border: 1px solid #e6e4db; border-radius: 18px; height: 280px; padding: 18px; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 4px 18px #39342005; }
+    #question-image { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .image-error { text-align: center; color: var(--red); }
+    .instruction { font-size: 20px; line-height: 1.5; color: var(--muted); text-align: center; margin: 15px 0; }
+    .answers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .answer { min-height: 142px; width: 100%; padding: 20px; display: flex; align-items: center; gap: 13px; border: 2px solid var(--line); border-radius: 12px; background: #ffffff; color: var(--ink); text-align: left; transition: border-color .15s, background .15s; }
+    .answer:hover:enabled { border-color: var(--ink); background: #f0f4ec; }
+    .letter { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border: 2px solid var(--line); border-radius: 8px; color: var(--ink); font-size: 32px; font-weight: 700; }
+    .answer-text { flex: 1; min-width: 0; font-size: 24px; font-weight: 650; line-height: 1.45; overflow-wrap: anywhere; text-align: center; margin-right: 61px; }
+    .answer-text span { display: block; font-size: 24px; font-weight: 500; color: var(--ink); margin-top: 5px; }
+    .answer.wrong, .answer.wrong:hover:enabled { color: var(--red); border-color: #ba4247; background: #fcebed; }
+    .answer.correct, .answer.correct:hover:enabled { color: var(--green); border-color: #388257; background: #eaf5e9; }
+    .answer.wrong .letter, .answer.correct .letter { border-color: currentColor; color: inherit; }
+    .answer.wrong .answer-text span, .answer.correct .answer-text span { color: inherit; }
+    .answer:disabled { cursor: default; opacity: 1; }
+    .feedback-row { margin-top: 18px; min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+    #feedback { margin: 0; font-size: 22px; line-height: 1.5; font-weight: 500; }
+    #feedback span { display: block; font-size: 22px; margin-top: 5px; }
+    #feedback.wrong { color: var(--red); }
+    #feedback.correct { color: var(--green); }
+    .primary { border: 0; border-radius: 10px; background: var(--ink); color: white; padding: 18px 24px; font-size: 22px; font-weight: 600; flex-shrink: 0; }
+    .primary:hover { background: #424b3d; }
+    .primary span { display: block; font-size: 22px; font-weight: 500; margin-top: 5px; color: white; }
+    #completion { text-align: center; padding: 85px 0 110px; }
+    .completion-mark { margin: 0 auto 26px; width: 64px; height: 64px; border-radius: 50%; background: #e4eddf; color: var(--green); display: grid; place-items: center; font-size: 32px; }
+    #completion p { font-size: 22px; color: var(--muted); line-height: 1.7; margin: 16px 0 28px; }
+    .completion-translation { display: block; font-size: 28px; margin-top: 14px; color: var(--muted); }
+    #completion h1:focus, #question-title:focus { outline: none; }
+    @media (max-width: 540px) {
+      main { padding: 0 20px 20px; margin-top: 4px; }
+      .progress-meta { font-size: 16px; }
+      figure { height: 235px; padding: 14px; }
+      .answers { grid-template-columns: 1fr; gap: 14px; }
+      .answer { min-height: 142px; padding: 18px 16px; }
+      .question-heading { margin-top: 20px; }
+      .feedback-row { align-items: stretch; flex-direction: column; gap: 12px; }
+      .primary { align-self: stretch; }
+      #completion { padding: 60px 0 80px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .answer { transition: none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <section id="welcome" aria-labelledby="welcome-title">
+      <div class="brand-mark" aria-hidden="true">SG</div>
+      <h1 id="welcome-title">Singapore Heritage Quiz</h1>
+      <span class="welcome-translation" lang="zh-Hans">新加坡文化遗产问答</span>
+      <span class="welcome-translation" lang="ms">Kuiz Warisan Singapura</span>
+      <p class="welcome-description">Explore 30 pictures of familiar objects, games, and food.<br>Choose an answer and try again whenever you need to.
+        <span lang="zh-Hans">通过30张图片，重温熟悉的生活用品、游戏和美食。<br>选择一个答案，答错了可以再试。</span>
+        <span lang="ms">Terokai 30 gambar barangan, permainan dan makanan yang dikenali.<br>Pilih satu jawapan. Jika tersalah, cuba lagi.</span>
+      </p>
+      <button id="start" class="primary" type="button">Start quiz <span lang="zh-Hans">开始问答</span><span lang="ms">Mulakan kuiz</span></button>
+    </section>
+    <section id="quiz" aria-label="Heritage quiz" hidden>
+      <div class="progress-meta"><span id="category"></span><span id="question-count"></span></div>
+      <progress id="progress" value="0" max="30" aria-label="Questions completed"></progress>
+      <div class="question-heading">
+        <h1 id="question-title" tabindex="-1"></h1>
+        <p><span id="question-chinese" lang="zh-Hans"></span> <span aria-hidden="true">·</span> <span id="question-malay" lang="ms"></span></p>
+      </div>
+      <figure>
+        <img id="question-image" alt="Heritage item to identify" draggable="false">
+        <p id="image-error" class="image-error" role="alert" hidden>The picture could not load. Please check the images folder.<br><span lang="zh-Hans">图片无法加载，请检查图片文件夹。</span><br><span lang="ms">Gambar tidak dapat dimuatkan. Sila semak folder gambar.</span></p>
+      </figure>
+      <p class="instruction">Choose one answer <span aria-hidden="true">·</span> <span lang="zh-Hans">请选择一个答案</span> <span aria-hidden="true">·</span> <span lang="ms">Pilih satu jawapan</span></p>
+      <div id="answers" class="answers" role="group" aria-labelledby="question-title question-chinese question-malay"></div>
+      <div class="feedback-row">
+        <p id="feedback" role="status" aria-live="polite" aria-atomic="true"></p>
+        <button id="next" class="primary" type="button" hidden></button>
+      </div>
+    </section>
+    <section id="completion" hidden>
+      <div class="completion-mark" aria-hidden="true">✓</div>
+      <h1 id="completion-title" tabindex="-1">A journey to remember.</h1>
+      <span class="completion-translation" lang="zh-Hans">重温我们的文化记忆。</span>
+      <span class="completion-translation" lang="ms">Sebuah perjalanan untuk dikenang.</span>
+      <p>You’ve completed all 30 questions.<br>Thanks for exploring Singapore’s heritage!<br><span lang="zh-Hans">你已完成全部30道题。感谢你一起探索新加坡的文化遗产！</span><br><span lang="ms">Anda telah menjawab kesemua 30 soalan.<br>Terima kasih kerana meneroka warisan Singapura!</span></p>
+      <button id="restart" class="primary" type="button">Play again <span lang="zh-Hans">再玩一次</span><span lang="ms">Main lagi</span></button>
+    </section>
+  </main>
+  <script>
+    // Keep each answer identical to one of its four options. Images follow document order.
+    const questions = [
+  {
+    "prompt": "What is this? / 这是什么？ / Apakah ini?",
+    "options": [
+      "Charcoal iron / 炭熨斗 / Seterika arang",
+      "Cooking pot / 炒锅 / Periuk",
+      "Kettle / 水壶 / Cerek",
+      "Dustpan / 畚箕 / Penyodok sampah"
+    ],
+    "answer": "Charcoal iron / 炭熨斗 / Seterika arang",
+    "image": "images/question-01.png",
+    "category": "Everyday objects / 生活用品 / Barangan harian"
+  },
+  {
+    "prompt": "What is this? / 这是什么？ / Apakah ini?",
+    "options": [
+      "Rattan basket / 藤篮 / Bakul rotan",
+      "Laundry basket / 洗衣篮 / Bakul pakaian",
+      "Fishing net / 渔网 / Jala ikan",
+      "Rice cooker / 电饭锅 / Periuk nasi"
+    ],
+    "answer": "Rattan basket / 藤篮 / Bakul rotan",
+    "image": "images/question-02.png",
+    "category": "Everyday objects / 生活用品 / Barangan harian"
+  },
+  {
+    "prompt": "What is this? / 这是什么？ / Apakah ini?",
+    "options": [
+      "Enamel bowl / 搪瓷碗 / Mangkuk enamel",
+      "Metal pot / 铁锅 / Periuk logam",
+      "Clay pot / 陶锅 / Periuk tanah liat",
+      "Glass bowl / 玻璃碗 / Mangkuk kaca"
+    ],
+    "answer": "Enamel bowl / 搪瓷碗 / Mangkuk enamel",
+    "image": "images/question-03.png",
+    "category": "Everyday objects / 生活用品 / Barangan harian"
+  },
+  {
+    "prompt": "What is this? / 这是什么？ / Apakah ini?",
+    "options": [
+      "Tinkat / 饭盒 / Mangkuk tingkat",
+      "Water bottle / 水壶 / Botol air",
+      "Lunch tray / 餐盘 / Dulang makanan",
+      "Bread tin / 面包盒 / Bekas roti"
+    ],
+    "answer": "Tinkat / 饭盒 / Mangkuk tingkat",
+    "image": "images/question-04.png",
+    "category": "Everyday objects / 生活用品 / Barangan harian"
+  },
+  {
+    "prompt": "What is this? / 这是什么？ / Apakah ini?",
+    "options": [
+      "Cassette tape / 录音带 / Pita kaset",
+      "Film reel / 电影胶卷 / Gelendong filem",
+      "Radio / 收音机 / Radio",
+      "Floppy disk / 软磁盘 / Cakera liut"
+    ],
+    "answer": "Cassette tape / 录音带 / Pita kaset",
+    "image": "images/question-05.png",
+    "category": "Everyday objects / 生活用品 / Barangan harian"
+  },
+  {
+    "prompt": "What is this? / 这是什么？ / Apakah ini?",
+    "options": [
+      "Laundry beater / 洗衣棒 / Pemukul pakaian",
+      "Rolling pin / 擀面杖 / Penggelek doh",
+      "Wooden spoon / 木勺 / Sudu kayu",
+      "Broom / 扫帚 / Penyapu"
+    ],
+    "answer": "Laundry beater / 洗衣棒 / Pemukul pakaian",
+    "image": "images/question-06.png",
+    "category": "Everyday objects / 生活用品 / Barangan harian"
+  },
+  {
+    "prompt": "What is this? / 这是什么？ / Apakah ini?",
+    "options": [
+      "Food cover / 食物罩 / Tudung saji",
+      "Bird cage / 鸟笼 / Sangkar burung",
+      "Laundry basket / 洗衣篮 / Bakul pakaian",
+      "Fruit basket / 水果篮 / Bakul buah"
+    ],
+    "answer": "Food cover / 食物罩 / Tudung saji",
+    "image": "images/question-07.png",
+    "category": "Everyday objects / 生活用品 / Barangan harian"
+  },
+  {
+    "prompt": "What is this? / 这是什么？ / Apakah ini?",
+    "options": [
+      "Sewing machine / 缝纫机 / Mesin jahit",
+      "Typewriter / 打字机 / Mesin taip",
+      "Spinning wheel / 纺车 / Roda pemintal",
+      "Washing machine / 洗衣机 / Mesin basuh"
+    ],
+    "answer": "Sewing machine / 缝纫机 / Mesin jahit",
+    "image": "images/question-08.png",
+    "category": "Everyday objects / 生活用品 / Barangan harian"
+  },
+  {
+    "prompt": "What is this? / 这是什么？ / Apakah ini?",
+    "options": [
+      "Ice shaver / 刨冰机 / Mesin pengisar ais",
+      "Meat grinder / 绞肉机 / Mesin pengisar daging",
+      "Coffee grinder / 咖啡研磨机 / Mesin pengisar kopi",
+      "Vegetable slicer / 切菜器 / Penghiris sayur"
+    ],
+    "answer": "Ice shaver / 刨冰机 / Mesin pengisar ais",
+    "image": "images/question-09.png",
+    "category": "Everyday objects / 生活用品 / Barangan harian"
+  },
+  {
+    "prompt": "What is this? / 这是什么？ / Apakah ini?",
+    "options": [
+      "Weighing scale / 秤 / Alat penimbang",
+      "Measuring tape / 卷尺 / Pita pengukur",
+      "Thermometer / 温度计 / Termometer",
+      "Speedometer / 速度表 / Meter laju"
+    ],
+    "answer": "Weighing scale / 秤 / Alat penimbang",
+    "image": "images/question-10.png",
+    "category": "Everyday objects / 生活用品 / Barangan harian"
+  },
+  {
+    "prompt": "What is this? / 这是什么？ / Apakah ini?",
+    "options": [
+      "Letter box / 邮箱 / Peti surat",
+      "Newspaper stand / 报纸架 / Rak surat khabar",
+      "Telephone booth / 电话亭 / Pondok telefon",
+      "Storage box / 储物箱 / Kotak simpanan"
+    ],
+    "answer": "Letter box / 邮箱 / Peti surat",
+    "image": "images/question-11.png",
+    "category": "Everyday objects / 生活用品 / Barangan harian"
+  },
+  {
+    "prompt": "What game is this? / 这是什么游戏？ / Apakah permainan ini?",
+    "options": [
+      "Chapteh / 踢毽子 / Capteh",
+      "Five Stones / 五粒石 / Batu seremban",
+      "Pick-up Sticks / 挑竹签 / Permainan mengutip lidi",
+      "Marbles / 弹珠 / Guli"
+    ],
+    "answer": "Chapteh / 踢毽子 / Capteh",
+    "image": "images/question-12.png",
+    "category": "Traditional games / 传统游戏 / Permainan tradisional"
+  },
+  {
+    "prompt": "What game is this? / 这是什么游戏？ / Apakah permainan ini?",
+    "options": [
+      "Five Stones / 五粒石 / Batu seremban",
+      "Chapteh / 踢毽子 / Capteh",
+      "Marbles / 弹珠 / Guli",
+      "Pick-up Sticks / 挑竹签 / Permainan mengutip lidi"
+    ],
+    "answer": "Five Stones / 五粒石 / Batu seremban",
+    "image": "images/question-13.png",
+    "category": "Traditional games / 传统游戏 / Permainan tradisional"
+  },
+  {
+    "prompt": "What game is this? / 这是什么游戏？ / Apakah permainan ini?",
+    "options": [
+      "Pick-up Sticks / 挑竹签 / Permainan mengutip lidi",
+      "Chinese Checkers / 跳棋 / Dam Cina",
+      "Dominoes / 多米诺骨牌 / Domino",
+      "Five Stones / 五粒石 / Batu seremban"
+    ],
+    "answer": "Pick-up Sticks / 挑竹签 / Permainan mengutip lidi",
+    "image": "images/question-14.png",
+    "category": "Traditional games / 传统游戏 / Permainan tradisional"
+  },
+  {
+    "prompt": "What game is this? / 这是什么游戏？ / Apakah permainan ini?",
+    "options": [
+      "Spinning Top / 陀螺 / Gasing",
+      "Yo-yo / 溜溜球 / Yo-yo",
+      "Marbles / 弹珠 / Guli",
+      "Chapteh / 踢毽子 / Capteh"
+    ],
+    "answer": "Spinning Top / 陀螺 / Gasing",
+    "image": "images/question-15.png",
+    "category": "Traditional games / 传统游戏 / Permainan tradisional"
+  },
+  {
+    "prompt": "What game is this? / 这是什么游戏？ / Apakah permainan ini?",
+    "options": [
+      "Yo-yo / 溜溜球 / Yo-yo",
+      "Spinning Top / 陀螺 / Gasing",
+      "Chapteh / 踢毽子 / Capteh",
+      "Chinese Checkers / 跳棋 / Dam Cina"
+    ],
+    "answer": "Yo-yo / 溜溜球 / Yo-yo",
+    "image": "images/question-16.png",
+    "category": "Traditional games / 传统游戏 / Permainan tradisional"
+  },
+  {
+    "prompt": "What game is this? / 这是什么游戏？ / Apakah permainan ini?",
+    "options": [
+      "Chinese Checkers / 跳棋 / Dam Cina",
+      "Chinese Chess / 象棋 / Catur Cina",
+      "Monopoly / 大富翁 / Monopoli",
+      "Mahjong / 麻将 / Mahjong"
+    ],
+    "answer": "Chinese Checkers / 跳棋 / Dam Cina",
+    "image": "images/question-17.png",
+    "category": "Traditional games / 传统游戏 / Permainan tradisional"
+  },
+  {
+    "prompt": "What game is this? / 这是什么游戏？ / Apakah permainan ini?",
+    "options": [
+      "Mahjong / 麻将 / Mahjong",
+      "Chinese Chess / 象棋 / Catur Cina",
+      "Dominoes / 多米诺骨牌 / Domino",
+      "Chinese Checkers / 跳棋 / Dam Cina"
+    ],
+    "answer": "Mahjong / 麻将 / Mahjong",
+    "image": "images/question-18.png",
+    "category": "Traditional games / 传统游戏 / Permainan tradisional"
+  },
+  {
+    "prompt": "What game is this? / 这是什么游戏？ / Apakah permainan ini?",
+    "options": [
+      "Snakes and Ladders / 蛇梯棋 / Ular dan tangga",
+      "Ludo / 飞行棋 / Ludo",
+      "Monopoly / 大富翁 / Monopoli",
+      "Chinese Checkers / 跳棋 / Dam Cina"
+    ],
+    "answer": "Snakes and Ladders / 蛇梯棋 / Ular dan tangga",
+    "image": "images/question-19.png",
+    "category": "Traditional games / 传统游戏 / Permainan tradisional"
+  },
+  {
+    "prompt": "What game is this? / 这是什么游戏？ / Apakah permainan ini?",
+    "options": [
+      "Ludo / 飞行棋 / Ludo",
+      "Snakes and Ladders / 蛇梯棋 / Ular dan tangga",
+      "Chinese Checkers / 跳棋 / Dam Cina",
+      "Monopoly / 大富翁 / Monopoli"
+    ],
+    "answer": "Ludo / 飞行棋 / Ludo",
+    "image": "images/question-20.png",
+    "category": "Traditional games / 传统游戏 / Permainan tradisional"
+  },
+  {
+    "prompt": "What game is this? / 这是什么游戏？ / Apakah permainan ini?",
+    "options": [
+      "Congkak / 珍珠棋 / Congkak",
+      "Chinese Checkers / 跳棋 / Dam Cina",
+      "Five Stones / 五粒石 / Batu seremban",
+      "Mancala / 播棋 / Mankala"
+    ],
+    "answer": "Congkak / 珍珠棋 / Congkak",
+    "image": "images/question-21.png",
+    "category": "Traditional games / 传统游戏 / Permainan tradisional"
+  },
+  {
+    "prompt": "What game is this? / 这是什么游戏？ / Apakah permainan ini?",
+    "options": [
+      "Rubber Band Jumping / 跳橡皮筋 / Lompat getah",
+      "Chapteh / 踢毽子 / Capteh",
+      "Five Stones / 五粒石 / Batu seremban",
+      "Jump Rope / 跳绳 / Lompat tali"
+    ],
+    "answer": "Rubber Band Jumping / 跳橡皮筋 / Lompat getah",
+    "image": "images/question-22.png",
+    "category": "Traditional games / 传统游戏 / Permainan tradisional"
+  },
+  {
+    "prompt": "What game is this? / 这是什么游戏？ / Apakah permainan ini?",
+    "options": [
+      "Hopscotch / 跳房子 / Teng-teng",
+      "Hide-and-Seek / 捉迷藏 / Sorok-sorok",
+      "Jump Rope / 跳绳 / Lompat tali",
+      "Marbles / 弹珠 / Guli"
+    ],
+    "answer": "Hopscotch / 跳房子 / Teng-teng",
+    "image": "images/question-23.png",
+    "category": "Traditional games / 传统游戏 / Permainan tradisional"
+  },
+  {
+    "prompt": "What food is this? / 这是什么食物？ / Apakah makanan ini?",
+    "options": [
+      "Ondeh-ondeh / 椰香糯米球 / Onde-onde",
+      "Tangyuan / 汤圆 / Tangyuan",
+      "Ang ku kueh / 红龟粿 / Kuih ang ku",
+      "Kueh salat / 沙拉糕 / Kuih salat"
+    ],
+    "answer": "Ondeh-ondeh / 椰香糯米球 / Onde-onde",
+    "image": "images/question-24.png",
+    "category": "Heritage food / 传统美食 / Makanan warisan"
+  },
+  {
+    "prompt": "What food is this? / 这是什么食物？ / Apakah makanan ini?",
+    "options": [
+      "Ang ku kueh / 红龟粿 / Kuih ang ku",
+      "Ondeh-ondeh / 椰香糯米球 / Onde-onde",
+      "Pineapple tart / 黄梨挞 / Tat nanas",
+      "Peanut dumpling / 花生糯米团 / Bebola pulut berinti kacang tanah"
+    ],
+    "answer": "Ang ku kueh / 红龟粿 / Kuih ang ku",
+    "image": "images/question-25.png",
+    "category": "Heritage food / 传统美食 / Makanan warisan"
+  },
+  {
+    "prompt": "What food is this? / 这是什么食物？ / Apakah makanan ini?",
+    "options": [
+      "Kueh lapis / 九层糕 / Kuih lapis",
+      "Kueh salat / 沙拉糕 / Kuih salat",
+      "Kueh talam / 双层糕 / Kuih talam",
+      "Rainbow cake / 彩虹蛋糕 / Kek pelangi"
+    ],
+    "answer": "Kueh lapis / 九层糕 / Kuih lapis",
+    "image": "images/question-26.png",
+    "category": "Heritage food / 传统美食 / Makanan warisan"
+  },
+  {
+    "prompt": "What food is this? / 这是什么食物？ / Apakah makanan ini?",
+    "options": [
+      "Kueh salat / 沙拉糕 / Kuih salat",
+      "Kueh lapis / 九层糕 / Kuih lapis",
+      "Pandan cake / 班兰蛋糕 / Kek pandan",
+      "Kueh talam / 双层糕 / Kuih talam"
+    ],
+    "answer": "Kueh salat / 沙拉糕 / Kuih salat",
+    "image": "images/question-27.png",
+    "category": "Heritage food / 传统美食 / Makanan warisan"
+  },
+  {
+    "prompt": "What food is this? / 这是什么食物？ / Apakah makanan ini?",
+    "options": [
+      "Kueh bangkit / 木薯饼 / Kuih bangkit",
+      "Pineapple tart / 黄梨挞 / Tat nanas",
+      "Love letter / 蛋卷 / Kuih kapit",
+      "Peanut cookie / 花生饼 / Biskut kacang tanah"
+    ],
+    "answer": "Kueh bangkit / 木薯饼 / Kuih bangkit",
+    "image": "images/question-28.png",
+    "category": "Heritage food / 传统美食 / Makanan warisan"
+  },
+  {
+    "prompt": "What food is this? / 这是什么食物？ / Apakah makanan ini?",
+    "options": [
+      "Bak chang / 肉粽 / Bak chang",
+      "Tangyuan / 汤圆 / Tangyuan",
+      "Popiah / 薄饼 / Popia",
+      "Ang ku kueh / 红龟粿 / Kuih ang ku"
+    ],
+    "answer": "Bak chang / 肉粽 / Bak chang",
+    "image": "images/question-29.png",
+    "category": "Heritage food / 传统美食 / Makanan warisan"
+  },
+  {
+    "prompt": "What food is this? / 这是什么食物？ / Apakah makanan ini?",
+    "options": [
+      "Kueh tutu / 嘟嘟糕 / Kuih tutu",
+      "Ang ku kueh / 红龟粿 / Kuih ang ku",
+      "Ondeh-ondeh / 椰香糯米球 / Onde-onde",
+      "Putu piring / 班兰米糕 / Putu piring"
+    ],
+    "answer": "Kueh tutu / 嘟嘟糕 / Kuih tutu",
+    "image": "images/question-30.png",
+    "category": "Heritage food / 传统美食 / Makanan warisan"
+  }
+];
+    const $ = id => document.getElementById(id);
+    let current = 0;
+    let answered = false;
+
+    function trilingual(element, english, chinese, malay) {
+      element.textContent = english;
+      for (const [language, text] of [['zh-Hans', chinese], ['ms', malay]]) {
+        const translation = document.createElement('span');
+        translation.lang = language;
+        translation.textContent = text;
+        element.append(translation);
+      }
+    }
+
+    function shuffled(options) {
+      const result = [...options];
+      for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+      }
+      return result;
+    }
+
+    function showQuestion() {
+      answered = false;
+      const question = questions[current];
+      const [english, chinese, malay] = question.prompt.split(' / ');
+      trilingual($('category'), ...question.category.split(' / '));
+      $('question-count').textContent = `${current + 1} / ${questions.length}`;
+      $('progress').max = questions.length;
+      $('progress').value = current;
+      $('question-title').textContent = english;
+      $('question-chinese').textContent = chinese;
+      $('question-malay').textContent = malay;
+      $('question-image').hidden = false;
+      $('image-error').hidden = true;
+      $('question-image').alt = `Picture for question ${current + 1}. Choose the matching answer below.`;
+      $('question-image').src = question.image;
+      $('feedback').textContent = '';
+      $('feedback').className = '';
+      $('next').hidden = true;
+      trilingual($('next'), current === questions.length - 1 ? 'Finish quiz →' : 'Next question →', current === questions.length - 1 ? '完成问答' : '下一题', current === questions.length - 1 ? 'Tamatkan kuiz' : 'Soalan seterusnya');
+      $('answers').replaceChildren();
+      shuffled(question.options).forEach((option, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'answer';
+        const letter = document.createElement('span');
+        letter.className = 'letter';
+        letter.textContent = 'ABCD'[index];
+        letter.setAttribute('aria-hidden', 'true');
+        const label = document.createElement('span');
+        label.className = 'answer-text';
+        trilingual(label, ...option.split(' / '));
+        button.append(letter, label);
+        button.addEventListener('click', () => {
+          if (answered) return;
+          if (option !== question.answer) {
+            button.classList.add('wrong');
+            letter.textContent = '×';
+            $('feedback').className = 'wrong';
+            trilingual($('feedback'), 'Not quite. Try again!', '不太对，再试一次！', 'Belum tepat. Cuba lagi!');
+            return;
+          }
+          answered = true;
+          button.classList.add('correct');
+          letter.textContent = '✓';
+          $('feedback').className = 'correct';
+          trilingual($('feedback'), current === questions.length - 1 ? 'Correct! You’ve reached the last question.' : 'Correct! Let’s go to the next question.', current === questions.length - 1 ? '答对了！你已完成最后一题。' : '答对了！继续下一题吧。', current === questions.length - 1 ? 'Betul! Anda telah sampai ke soalan terakhir.' : 'Betul! Mari teruskan ke soalan seterusnya.');
+          $('progress').value = current + 1;
+          $('answers').querySelectorAll('button').forEach(answer => { answer.disabled = true; });
+          $('next').hidden = false;
+          $('next').focus({ preventScroll: true });
+        });
+        $('answers').append(button);
+      });
+    }
+
+    $('question-image').addEventListener('error', () => {
+      $('question-image').hidden = true;
+      $('image-error').hidden = false;
+    });
+    $('next').addEventListener('click', () => {
+      if (!answered) return;
+      current++;
+      if (current === questions.length) {
+        $('quiz').hidden = true;
+        $('completion').hidden = false;
+        $('completion-title').focus({ preventScroll: true });
+      } else {
+        showQuestion();
+        $('answers').querySelector('button').focus({ preventScroll: true });
+      }
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+    function startQuiz() {
+      current = 0;
+      $('welcome').hidden = true;
+      $('completion').hidden = true;
+      $('quiz').hidden = false;
+      showQuestion();
+      $('question-title').focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+    $('start').addEventListener('click', startQuiz);
+    $('restart').addEventListener('click', startQuiz);
+  </script>
+</body>
+</html>
